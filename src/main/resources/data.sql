@@ -1,0 +1,1 @@
+insert into neg_empresa values('001','001','http://demo1.comprobantesjr.com','mDDWoxA2RJkyDznbl63I1ygNTMOaS3mPelDrh89K0HziDbGXsr');
