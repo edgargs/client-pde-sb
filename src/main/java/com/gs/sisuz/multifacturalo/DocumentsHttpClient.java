@@ -1,5 +1,7 @@
 package com.gs.sisuz.multifacturalo;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gs.sisuz.model.CompanyId;
 import com.gs.sisuz.model.Enterprise;
 import com.gs.sisuz.multifacturalo.dto.Document;
@@ -69,21 +71,21 @@ public class DocumentsHttpClient {
                     .header("Authorization", String.format("Bearer %s", configuration.token()))
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(document)
-                    .retrieve()
-                    .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
-                        StringBuilder json = new StringBuilder();
-                        try (InputStream input = response.getBody()) {
-                            InputStreamReader isr = new InputStreamReader(input);
-                            BufferedReader reader = new BufferedReader(isr);
+                    .exchange( (request, response) -> {
+                        ObjectMapper mapper = new ObjectMapper();
+                        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-                            int c;
-                            while ((c = reader.read()) != -1) {
-                                json.append((char) c);
-                            }
+                        ResponseFact apiResponse = null;
+                        if (response.getStatusCode().is4xxClientError()
+                                || response.getStatusCode().is5xxServerError()) {
+                            apiResponse = mapper.readValue(response.getBody(), ResponseFact.class);
+                        } else {
+                            apiResponse = mapper.readValue(response.getBody(), ResponseFact.class);
                         }
-                        throw new RuntimeException(json.toString());
-                    })
-                    .body(ResponseFact.class);
+                        return apiResponse;
+                    } );
+                    /*.retrieve()
+                    .body(ResponseFact.class);*/
 
         } catch (Exception exception){
             log.error("HttpClient error",exception);

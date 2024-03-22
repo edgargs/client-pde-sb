@@ -44,7 +44,7 @@ public class DocumentService {
         DocumentsHttpClient client = DocumentsHttpClient.intanceClientConfig(enterpriseRepository, codNegocio,"/api/documents");
 
         PaymentVoucher voucher = new PaymentVoucher(
-                "02","F","001","12",new Date(2024-1900,3-1,22),
+                "02","F","001","13",new Date(2024-1900,3-1,22),
                 "01",
                 "6","10418540341","Edgar Rios","Chaclacayo",
                 100.0, 0.0,0.0,0.0,18.0, 118.0,0.0);
