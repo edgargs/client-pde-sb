@@ -1,5 +1,6 @@
 package com.gs.sisuz.multifacturalo.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,10 +43,13 @@ public class Document {
     @JsonProperty("condicion_de_pago")
     private String condicionDePago;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Cuota[] cuotas;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Guia[] guias;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Retencion retencion;
 
     // Getters and Setters
