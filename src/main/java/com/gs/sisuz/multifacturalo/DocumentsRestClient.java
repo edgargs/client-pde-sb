@@ -2,39 +2,40 @@ package com.gs.sisuz.multifacturalo;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gs.sisuz.model.CompanyId;
 import com.gs.sisuz.model.Enterprise;
 import com.gs.sisuz.multifacturalo.dto.Document;
 import com.gs.sisuz.multifacturalo.dto.ResponseFact;
-import com.gs.sisuz.repository.EnterpriseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 
-public class DocumentsHttpClient {
+public class DocumentsRestClient {
 
-    private final Logger log = LoggerFactory.getLogger(DocumentsHttpClient.class);
+    private final Logger log = LoggerFactory.getLogger(DocumentsRestClient.class);
 
-    private URI uri;
-    private ClientConfiguration configuration;
+    private final ObjectMapper mapper;
 
-    public static DocumentsHttpClient intanceClientConfig(EnterpriseRepository enterpriseRepository, String codNegocio, String path) throws MalformedURLException, URISyntaxException {
+    private final ClientConfiguration configuration;
 
-        //List<Enterprise> enterprises = enterpriseRepository.findAll();
-        //Enterprise enterprise = enterprises.getFirst();
-        var companyId = new CompanyId("001", codNegocio);
-        Enterprise enterprise = enterpriseRepository.findByCodGrupoCiaAndCodCia(companyId.codGrupoCia(), companyId.codCia());
+    private final RestClient restClient;
+
+    public DocumentsRestClient(ClientConfiguration configuration) {
+
+        mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        this.restClient = RestClient.builder()
+                .baseUrl(configuration.url())
+                .defaultHeader("Authorization", String.format("Bearer %s", configuration.token()))
+                .build();
+        this.configuration = configuration;
+    }
+
+    public static DocumentsRestClient instanceClientConfig(Enterprise enterprise, String path) throws MalformedURLException, URISyntaxException {
 
         ClientConfiguration configuration = new ClientConfiguration(
                 enterprise.url(),
@@ -43,37 +44,20 @@ public class DocumentsHttpClient {
         );
         //log.debug("Configuration: {}",configuration);
 
-        DocumentsHttpClient client = new DocumentsHttpClient();
-        client.setConfiguration(configuration);
-
-        return client;
-    }
-
-    void setConfiguration(ClientConfiguration configuration) throws URISyntaxException, MalformedURLException {
-
-        this.uri = new URI(configuration.url() + configuration.path()).toURL().toURI();
-        this.configuration = configuration;
+        return new DocumentsRestClient(configuration);
     }
 
     public ResponseFact store(Document document) {
         log.debug("Document: {}",document);
-        /*
-        HttpRequest<?> req = HttpRequest.POST(uri,document).contentType(MediaType.APPLICATION_JSON)
-            .bearerAuth(configuration.getToken());
-         return postClient(req);
-         */
-        RestClient restClient = RestClient.create();
+
         ResponseFact message;
 
         try {
             message = restClient.post()
-                    .uri(uri)
-                    .header("Authorization", String.format("Bearer %s", configuration.token()))
+                    .uri(configuration.path())
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(document)
                     .exchange( (request, response) -> {
-                        ObjectMapper mapper = new ObjectMapper();
-                        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
                         ResponseFact apiResponse = null;
                         if (response.getStatusCode().is4xxClientError()

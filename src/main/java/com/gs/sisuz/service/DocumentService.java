@@ -1,9 +1,7 @@
 package com.gs.sisuz.service;
 
-import com.gs.sisuz.model.OrderDetail;
-import com.gs.sisuz.model.PaymentVoucher;
-import com.gs.sisuz.model.Product;
-import com.gs.sisuz.multifacturalo.DocumentsHttpClient;
+import com.gs.sisuz.model.*;
+import com.gs.sisuz.multifacturalo.DocumentsRestClient;
 import com.gs.sisuz.multifacturalo.dto.*;
 import com.gs.sisuz.repository.EnterpriseRepository;
 import org.slf4j.Logger;
@@ -41,7 +39,9 @@ public class DocumentService {
     private void sendDocuments() throws MalformedURLException, URISyntaxException {
 
         String codNegocio = "001"; //event.getCodNegocio();
-        DocumentsHttpClient client = DocumentsHttpClient.intanceClientConfig(enterpriseRepository, codNegocio,"/api/documents");
+        var companyId = new CompanyId("001", codNegocio);
+        Enterprise enterprise = enterpriseRepository.findByCodGrupoCiaAndCodCia(companyId.codGrupoCia(), companyId.codCia());
+        DocumentsRestClient client = DocumentsRestClient.instanceClientConfig(enterprise,"/api/documents");
 
         PaymentVoucher voucher = new PaymentVoucher(
                 "02","F","001","13",new Date(2024-1900,3-1,22),
