@@ -19,3 +19,16 @@ VALUES (
     'N',
     'S','F001-46'
 );
+
+INSERT INTO VTA_PEDIDO_VTA_DET
+VALUES(
+	'001','001','000112545',1,
+	'P0121',2,50.0,100,59,
+    '10',18.0,18.0,118.0
+);
+
+INSERT INTO LGT_PROD
+VALUES(
+	'001','P0121',
+	'Inca Kola 250 ml', 'UNIDAD'
+);

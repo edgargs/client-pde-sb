@@ -4,14 +4,12 @@ import com.gs.sisuz.model.*;
 import com.gs.sisuz.multifacturalo.DocumentsRestClient;
 import com.gs.sisuz.multifacturalo.dto.*;
 import com.gs.sisuz.repository.EnterpriseRepository;
-import com.gs.sisuz.repository.PaymentVoucherRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.sql.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -30,13 +28,21 @@ public class DocumentService {
     private final EnterpriseRepository enterpriseRepository;
     private final PaymentVoucherService paymentVoucherService;
 
+    private final OrderDetailService orderDetailService;
+
+    private final ProductService productService;
+
     private DateFormat dtf = new SimpleDateFormat("yyyy-MM-dd");
     private DateFormat dtmf = new SimpleDateFormat("HH:mm:ss");
 
     public DocumentService(EnterpriseRepository enterpriseRepository,
-                           PaymentVoucherService paymentVoucherService) {
+                           PaymentVoucherService paymentVoucherService,
+                           OrderDetailService orderDetailService,
+                           ProductService productService) {
         this.enterpriseRepository = enterpriseRepository;
         this.paymentVoucherService = paymentVoucherService;
+        this.orderDetailService = orderDetailService;
+        this.productService = productService;
     }
 
     void processDocumentsPending() throws MalformedURLException, URISyntaxException {
@@ -47,7 +53,7 @@ public class DocumentService {
 
     private void processDocumentsBF() throws MalformedURLException, URISyntaxException {
 
-        var vouchers = listOrdersPendingF("001","001", "2024-04-07", "2024-04-07");
+        var vouchers = listOrdersPendingF("001","001", "2024-04-08", "2024-04-08");
         sendDocuments(vouchers);
     }
 
@@ -148,34 +154,35 @@ public class DocumentService {
                 voucher.valTotalVenta());
         document.setTotales(totales);
 
+        List<OrderDetail> details = orderDetailService.listOrderDetail(voucher.id());
+
         List<Item> lstItem = new ArrayList<>();
+        Product product;
+        for(OrderDetail detail : details) {
+            product = productService.findByCodProd(detail.id().codGrupoCia(), detail.codProd());
 
-        OrderDetail detail = new OrderDetail("P0121",2,50.0,100,59,
-                "10",18.0,18.0,118.0);
-        Product product = new Product("Inca Kola 250 ml","UNIDAD");
-
-        Item item = new Item();
-        item.setCodigoInterno(detail.codProd());
-        item.setDescripcion(product.descProd());
-        item.setCodigoProductoSunat("-");
-        item.setUnidadMedida(product.valUnidadMedidaSunat());
-        item.setCantidad(Math.abs(detail.cantAtendida()));
-        //if (voucher.valTipoDocumentoSunat().equals("07")) { // 20.03.2023 ERIOS Fix credit price
-        //    double valorUnitario = detail.valVtaItemE() / Math.abs(detail.cantAtendida());
-        //    item.setValorUnitario(round(valorUnitario, 5));
-        //} else {
+            Item item = new Item();
+            item.setCodigoInterno(detail.codProd());
+            item.setDescripcion(product.descProd());
+            item.setCodigoProductoSunat("-");
+            item.setUnidadMedida(product.valUnidadMedidaSunat());
+            item.setCantidad(Math.abs(detail.cantAtendida()));
+            //if (voucher.valTipoDocumentoSunat().equals("07")) { // 20.03.2023 ERIOS Fix credit price
+            //    double valorUnitario = detail.valVtaItemE() / Math.abs(detail.cantAtendida());
+            //    item.setValorUnitario(round(valorUnitario, 5));
+            //} else {
             item.setValorUnitario(Math.abs(detail.sinIgvBaseValPrecVta()));
-        //}
-        //if("31".equals(detail.getCodTipAfecIgvE())) {
-        //    item.setCodigoTipoPrecio("02");
-        //    item.setPrecioUnitario(detail.getValPrecVtaUnitE());
-        //    item.setTipoAfectacionIgv("15");
-        //    double totalItem = Math.abs(detail.getCantAtendida())*detail.getValPrecVtaUnitE();
-        //    item.setTotalBaseIgv(totalItem);
-        //    item.setPorcentajeIgv(detail.getValIgv());
-        //    item.setTotalIgv(1.00);
-        //    item.setTotalValorItem(totalItem);
-        //} else {
+            //}
+            //if("31".equals(detail.getCodTipAfecIgvE())) {
+            //    item.setCodigoTipoPrecio("02");
+            //    item.setPrecioUnitario(detail.getValPrecVtaUnitE());
+            //    item.setTipoAfectacionIgv("15");
+            //    double totalItem = Math.abs(detail.getCantAtendida())*detail.getValPrecVtaUnitE();
+            //    item.setTotalBaseIgv(totalItem);
+            //    item.setPorcentajeIgv(detail.getValIgv());
+            //    item.setTotalIgv(1.00);
+            //    item.setTotalValorItem(totalItem);
+            //} else {
             item.setCodigoTipoPrecio("01");
             item.setPrecioUnitario(detail.valPrecVtaUnitE());
             item.setTipoAfectacionIgv(detail.codTipAfecIgvE());
@@ -183,12 +190,13 @@ public class DocumentService {
             item.setPorcentajeIgv(detail.valIgv());
             item.setTotalIgv(detail.valTotalIgvItemE());
             item.setTotalValorItem(detail.valVtaItemE());
-        //}
-        item.setTotalImpuestos(detail.getTotalImpuestos());
+            //}
+            item.setTotalImpuestos(detail.getTotalImpuestos());
 
-        item.setTotalItem(Math.abs(detail.valPrecTotal()));
+            item.setTotalItem(Math.abs(detail.valPrecTotal()));
 
-        lstItem.add(item);
+            lstItem.add(item);
+        }
 
         Item[] itemsToArray = new Item[lstItem.size()];
         Item[] items = lstItem.toArray(itemsToArray);
