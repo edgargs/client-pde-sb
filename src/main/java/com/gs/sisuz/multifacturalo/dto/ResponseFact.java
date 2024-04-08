@@ -14,13 +14,3 @@ public record ResponseFact (
     }
 }
 
-record ResponseData (
-        String number,
-        @JsonAlias({ "external_id" })
-        String externalId
-) {}
-
-record ResponseField (
-        String code,
-        String description
-) {}

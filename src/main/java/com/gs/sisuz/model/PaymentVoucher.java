@@ -1,11 +1,14 @@
 package com.gs.sisuz.model;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.sql.Date;
 
 @Table("VTA_COMP_PAGO")
 public record PaymentVoucher(
+        @Id @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) PaymentVoucherId id,
         String tipCompPago,
         String cePrefijo,
         String ceSerie,
@@ -22,7 +25,10 @@ public record PaymentVoucher(
         double totalGratuE,
         double valIgvCompPago,
         double valNetoCompPago,
-        double valRedondeoCompPago
+        double valRedondeoCompPago,
+        String ceEstadoEnvioSunat,
+        String ceDescripcionObservado,
+        String externalId
 ) {
     public double valTotalImpuestos() {
         return Math.abs(valIgvCompPago);
@@ -64,5 +70,31 @@ public record PaymentVoucher(
 
     public String valNombreImpreso() {
         return nomImprComp.trim().equals("")?"CLIENTE VARIOS":nomImprComp;
+    }
+
+    public PaymentVoucher updateEnvioSunat(String ceEstadoEnvioSunat, String ceDescripcionObservado, String externalId) {
+        return new PaymentVoucher(
+                id(),
+                tipCompPago(),
+                cePrefijo(),
+                ceSerie(),
+                ceCorrelativo(),
+                fecCreaCompPago(),
+                codTipMoneda(),
+                codTipIdentRecepE(),
+                numDocImpr(),
+                nomImprComp(),
+                direcImprComp(),
+                totalGravE(),
+                totalInafE(),
+                totalExonE(),
+                totalGratuE(),
+                valIgvCompPago(),
+                valNetoCompPago(),
+                valRedondeoCompPago(),
+                ceEstadoEnvioSunat,
+                ceDescripcionObservado,
+                externalId
+        );
     }
 }

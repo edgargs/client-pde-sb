@@ -4,6 +4,7 @@ import com.gs.sisuz.model.*;
 import com.gs.sisuz.multifacturalo.DocumentsRestClient;
 import com.gs.sisuz.multifacturalo.dto.*;
 import com.gs.sisuz.repository.EnterpriseRepository;
+import com.gs.sisuz.repository.PaymentVoucherRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,11 @@ import java.sql.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 @Service
@@ -23,36 +28,64 @@ public class DocumentService {
     private final Logger log = LoggerFactory.getLogger(DocumentService.class);
 
     private final EnterpriseRepository enterpriseRepository;
+    private final PaymentVoucherService paymentVoucherService;
 
     private DateFormat dtf = new SimpleDateFormat("yyyy-MM-dd");
     private DateFormat dtmf = new SimpleDateFormat("HH:mm:ss");
 
-    public DocumentService(EnterpriseRepository enterpriseRepository) {
+    public DocumentService(EnterpriseRepository enterpriseRepository,
+                           PaymentVoucherService paymentVoucherService) {
         this.enterpriseRepository = enterpriseRepository;
+        this.paymentVoucherService = paymentVoucherService;
     }
 
     void processDocumentsPending() throws MalformedURLException, URISyntaxException {
         log.info("Documents Pending");
-        sendDocuments();
+        processDocumentsBF();
+
     }
 
-    private void sendDocuments() throws MalformedURLException, URISyntaxException {
+    private void processDocumentsBF() throws MalformedURLException, URISyntaxException {
+
+        var vouchers = listOrdersPendingF("001","001", "2024-04-07", "2024-04-07");
+        sendDocuments(vouchers);
+    }
+
+    private List<PaymentVoucher> listOrdersPendingF(String codGrupoCia, String codLocal, String dateFecIni, String dateFecFin) {
+        //2. Envio de facturas
+        List<PaymentVoucher> listVoucherF = paymentVoucherService.listPendingVouchers(codGrupoCia, codLocal, "02", dateFecIni, dateFecIni);
+        //3. Envio de NC de facturas
+        List<PaymentVoucher> listVoucherFN = Collections.emptyList(); //paymentVoucherService.listPendingNCredit(codGrupoCia, codLocal, "1", dateFecIni, dateFecIni);
+
+        List<PaymentVoucher> combinedList = Stream.of(listVoucherF, listVoucherFN)
+                .flatMap(x -> x.stream())
+                .collect(Collectors.toList());
+
+        return combinedList;
+    }
+
+    private void sendDocuments(List<PaymentVoucher> vouchers) throws MalformedURLException, URISyntaxException {
 
         String codNegocio = "001"; //event.getCodNegocio();
         var companyId = new CompanyId("001", codNegocio);
         Enterprise enterprise = enterpriseRepository.findByCodGrupoCiaAndCodCia(companyId.codGrupoCia(), companyId.codCia());
         DocumentsRestClient client = DocumentsRestClient.instanceClientConfig(enterprise,"/api/documents");
 
-        PaymentVoucher voucher = new PaymentVoucher(
-                "02","F","001","13",new Date(2024-1900,3-1,22),
-                "01",
-                "6","10418540341","Edgar Rios","Chaclacayo",
-                100.0, 0.0,0.0,0.0,18.0, 118.0,0.0);
+        //1. Read all vouchers pending by company
+        for(PaymentVoucher voucher : vouchers) {
+            //2.1 Make payload of document
+            Document document = makePayload(voucher);
 
-        //2.1 Make payload of document
-        Document document = makePayload(voucher);
-
-        var response = client.store(document);
+            //2.2 Update document with response
+            String numeroDoc = voucher.cePrefijo() + voucher.ceSerie()+"-"+voucher.ceCorrelativo();
+            if(document==null){
+                log.warn("Documento {} no enviado",numeroDoc);
+            } else {
+                var response = client.store(document);
+                updateSentVoucher(voucher, response);
+            }
+        }
+        log.info("Fin proceso: {}", vouchers.size());
     }
 
     public Document makePayload(PaymentVoucher voucher) {
@@ -166,5 +199,40 @@ public class DocumentService {
         document.setAcciones(acciones);
 
         return document;
+    }
+
+    public void updateSentVoucher(PaymentVoucher voucher, ResponseFact response) {
+        String numeroDoc = voucher.cePrefijo() + voucher.ceSerie()+"-"+voucher.ceCorrelativo();
+        //P: EN PROCESO, S: EMITIDO, N: NO EMITIDO, B: DADO DE BAJA, R: ENVIADO EN RESUMEN DIARIO, E: ERROR, Q: EN PROCESO BAJA
+        if(response.success()){
+            String ceEstadoEnvioSunat,ceDescripcionObservado="-";
+            switch(voucher.valTipoDocumentoSunat()) {
+                case "03": ceEstadoEnvioSunat="R"; break;
+                case "07": ceEstadoEnvioSunat="B"; break;
+                default: ceEstadoEnvioSunat="S"; break;
+            }
+
+            if(response.response().notes() != null &&
+                    response.response().notes().length > 0) {
+
+                ceDescripcionObservado = Arrays.toString(response.response().notes());
+                if(ceDescripcionObservado.length()>480) ceDescripcionObservado = ceDescripcionObservado.substring(0,480);
+            }
+
+            voucher = voucher.updateEnvioSunat(
+                    ceEstadoEnvioSunat,
+                    ceDescripcionObservado,
+                    response.data().externalId()
+            );
+            log.info("Documento {} enviado.",numeroDoc);
+        } else {
+            voucher = voucher.updateEnvioSunat(
+                    "E",
+                    response.message(),
+                    "");
+            log.error("Documento {} enviado con error.",numeroDoc);
+        }
+
+        paymentVoucherService.updateEnvioSunat(voucher);
     }
 }
