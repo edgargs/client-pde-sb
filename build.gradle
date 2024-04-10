@@ -1,5 +1,5 @@
 plugins {
-	id 'java'
+	id 'groovy'
 	id 'org.springframework.boot' version '3.2.3'
 	id 'io.spring.dependency-management' version '1.1.4'
 	id 'org.graalvm.buildtools.native' version '0.9.28'
@@ -19,9 +19,15 @@ repositories {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
-	runtimeOnly 'com.h2database:h2'
+    runtimeOnly 'com.h2database:h2'
 	runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	// mandatory dependencies for using Spock
+	implementation platform('org.apache.groovy:groovy-bom:4.0.20')
+	implementation 'org.apache.groovy:groovy'
+	testImplementation platform("org.spockframework:spock-bom:2.3-groovy-4.0")
+	testImplementation "org.spockframework:spock-core"
 }
 
 tasks.named('test') {

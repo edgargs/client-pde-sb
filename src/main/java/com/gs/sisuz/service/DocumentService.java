@@ -1,9 +1,7 @@
 package com.gs.sisuz.service;
 
 import com.gs.sisuz.model.*;
-import com.gs.sisuz.multifacturalo.DocumentsRestClient;
 import com.gs.sisuz.multifacturalo.dto.*;
-import com.gs.sisuz.repository.EnterpriseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -25,24 +23,26 @@ public class DocumentService {
 
     private final Logger log = LoggerFactory.getLogger(DocumentService.class);
 
-    private final EnterpriseRepository enterpriseRepository;
+    private final EnterpriseService enterpriseService;
     private final PaymentVoucherService paymentVoucherService;
-
     private final OrderDetailService orderDetailService;
-
     private final ProductService productService;
+
+    private final MultifacturaloService multifacturaloService;
 
     private DateFormat dtf = new SimpleDateFormat("yyyy-MM-dd");
     private DateFormat dtmf = new SimpleDateFormat("HH:mm:ss");
 
-    public DocumentService(EnterpriseRepository enterpriseRepository,
+    public DocumentService(EnterpriseService enterpriseService,
                            PaymentVoucherService paymentVoucherService,
                            OrderDetailService orderDetailService,
-                           ProductService productService) {
-        this.enterpriseRepository = enterpriseRepository;
+                           ProductService productService,
+                           MultifacturaloService multifacturaloService) {
+        this.enterpriseService = enterpriseService;
         this.paymentVoucherService = paymentVoucherService;
         this.orderDetailService = orderDetailService;
         this.productService = productService;
+        this.multifacturaloService = multifacturaloService;
     }
 
     void processDocumentsPending() throws MalformedURLException, URISyntaxException {
@@ -74,8 +74,9 @@ public class DocumentService {
 
         String codNegocio = "001"; //event.getCodNegocio();
         var companyId = new CompanyId("001", codNegocio);
-        Enterprise enterprise = enterpriseRepository.findByCodGrupoCiaAndCodCia(companyId.codGrupoCia(), companyId.codCia());
-        DocumentsRestClient client = DocumentsRestClient.instanceClientConfig(enterprise,"/api/documents");
+        Enterprise enterprise = enterpriseService.findByCodGrupoCiaAndCodCia(companyId.codGrupoCia(), companyId.codCia());
+
+        multifacturaloService.configClient(enterprise,"/api/documents");
 
         //1. Read all vouchers pending by company
         for(PaymentVoucher voucher : vouchers) {
@@ -87,14 +88,14 @@ public class DocumentService {
             if(document==null){
                 log.warn("Documento {} no enviado",numeroDoc);
             } else {
-                var response = client.store(document);
+                var response = multifacturaloService.store(document);
                 updateSentVoucher(voucher, response);
             }
         }
         log.info("Fin proceso: {}", vouchers.size());
     }
 
-    public Document makePayload(PaymentVoucher voucher) {
+    private Document makePayload(PaymentVoucher voucher) {
 
         Document document = null;
         //if(voucher.valTipoDocumentoSunat().equals("07")) {
@@ -209,7 +210,7 @@ public class DocumentService {
         return document;
     }
 
-    public void updateSentVoucher(PaymentVoucher voucher, ResponseFact response) {
+    private void updateSentVoucher(PaymentVoucher voucher, ResponseFact response) {
         String numeroDoc = voucher.cePrefijo() + voucher.ceSerie()+"-"+voucher.ceCorrelativo();
         //P: EN PROCESO, S: EMITIDO, N: NO EMITIDO, B: DADO DE BAJA, R: ENVIADO EN RESUMEN DIARIO, E: ERROR, Q: EN PROCESO BAJA
         if(response.success()){
