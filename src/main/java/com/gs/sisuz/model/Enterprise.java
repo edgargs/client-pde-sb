@@ -1,12 +1,11 @@
 package com.gs.sisuz.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Embedded;
-import org.springframework.data.relational.core.mapping.Table;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
 
-@Table("NEG_EMPRESA")
+@Entity(name = "NEG_EMPRESA")
 public record Enterprise(
-        @Id @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) CompanyId id,
+        @EmbeddedId CompanyId id,
 
         String url,
         String token

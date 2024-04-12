@@ -1,28 +1,28 @@
 package com.gs.sisuz.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Embedded;
-import org.springframework.data.relational.core.mapping.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
 
 import java.sql.Date;
 
-@Table("VTA_COMP_PAGO")
+@Entity(name="VTA_COMP_PAGO")
 public record PaymentVoucher(
-        @Id @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) PaymentVoucherId id,
+        @EmbeddedId PaymentVoucherId id,
         String tipCompPago,
         String cePrefijo,
         String ceSerie,
         String ceCorrelativo,
         Date fecCreaCompPago,
         String codTipMoneda,
-        String codTipIdentRecepE,
+        @Column(name = "cod_tip_ident_recep_e") String codTipIdentRecepE,
         String numDocImpr,
         String nomImprComp,
         String direcImprComp,
-        double totalGravE,
-        double totalInafE,
-        double totalExonE,
-        double totalGratuE,
+        @Column(name = "total_grav_e") double totalGravE,
+        @Column(name = "total_inaf_e") double totalInafE,
+        @Column(name = "total_exon_e") double totalExonE,
+        @Column(name = "total_gratu_e") double totalGratuE,
         double valIgvCompPago,
         double valNetoCompPago,
         double valRedondeoCompPago,

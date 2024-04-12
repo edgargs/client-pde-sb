@@ -2,16 +2,14 @@ package com.gs.sisuz.repository;
 
 import com.gs.sisuz.model.PaymentVoucher;
 import com.gs.sisuz.model.PaymentVoucherId;
-import org.springframework.data.jdbc.repository.query.Modifying;
-import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.ListCrudRepository;
 
 import java.util.List;
 
 public interface PaymentVoucherRepository extends ListCrudRepository<PaymentVoucher, PaymentVoucherId> {
 
-    @Modifying
-    @Query("""
+    @Query(value = """
             UPDATE VTA_COMP_PAGO
             SET 
                 CE_ESTADO_ENVIO_SUNAT =     :ceEstadoEnvioSunat ,
@@ -22,11 +20,12 @@ public interface PaymentVoucherRepository extends ListCrudRepository<PaymentVouc
                 AND COD_LOCAL =     :codLocal
                 AND NUM_PED_VTA =   :numPedVta
                 AND SEC_COMP_PAGO = :secCompPago
-            """)
+            """,
+            nativeQuery = true)
     boolean updateEnvioSunat(String ceEstadoEnvioSunat, String ceDescripcionObservado, String externalId,
                              String codGrupoCia, String codLocal, String numPedVta, String secCompPago);
 
-    @Query("""
+    @Query(value = """
             SELECT PAG.* 
             FROM VTA_PEDIDO_VTA_CAB CAB 
                      INNER JOIN VTA_COMP_PAGO PAG  
@@ -40,6 +39,7 @@ public interface PaymentVoucherRepository extends ListCrudRepository<PaymentVouc
                      AND   CAB.EST_PED_VTA = 'C' 
                      AND   TRUNC(PAG.FEC_CREA_COMP_PAGO) BETWEEN :fechaInicioEnvio AND :fechaFinEnvio 
             ORDER BY PAG.NUM_COMP_PAGO_E ASC
-            """)
+            """,
+            nativeQuery = true)
     List<PaymentVoucher> listPendingVouchers(String codGrupoCia, String codLocal, String tipCompPago, String fechaInicioEnvio, String fechaFinEnvio);
 }

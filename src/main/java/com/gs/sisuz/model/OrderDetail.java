@@ -1,12 +1,11 @@
 package com.gs.sisuz.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Embedded;
-import org.springframework.data.relational.core.mapping.Table;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
 
-@Table("VTA_PEDIDO_VTA_DET")
+@Entity(name="VTA_PEDIDO_VTA_DET")
 public record OrderDetail(
-        @Id @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) OrderDetailId id,
+        @EmbeddedId OrderDetailId id,
         String codProd,
         int cantAtendida,
         double sinIgvBaseValPrecVta,

@@ -1,7 +1,8 @@
 package com.gs.sisuz.model;
 
-import org.springframework.data.relational.core.mapping.Column;
+import jakarta.persistence.Embeddable;
 
+@Embeddable
 public record CompanyId(
 
         //@Column("cod_grupo_cia")

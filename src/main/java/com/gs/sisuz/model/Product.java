@@ -1,12 +1,11 @@
 package com.gs.sisuz.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Embedded;
-import org.springframework.data.relational.core.mapping.Table;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
 
-@Table("LGT_PROD")
+@Entity(name="LGT_PROD")
 public record Product(
-        @Id @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) ProductId id,
+        @EmbeddedId ProductId id,
         String descProd,
         String descUnidPresent
 ) {
