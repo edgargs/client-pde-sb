@@ -8,8 +8,9 @@
 name: Java CI with Gradle
 
 on:
-  release:
-    types: [published] #https://michael-mckenna.com/how-to-upload-file-to-github-release-in-a-workflow/
+  push
+  #release:
+  #  types: [published] #https://michael-mckenna.com/how-to-upload-file-to-github-release-in-a-workflow/
 
 
 jobs:
@@ -60,7 +61,7 @@ jobs:
     
     - name: Upload Release Asset
       id: upload-release-asset 
-      run: gh api --method POST /repos/$OWNER/$REPO/releases/$RELEASE_ID/assets?name=$ASSET_NAME -f '@'$ASSET_PATH
+      run: gh api --method POST --hostname github.com /repos/$OWNER/$REPO/releases/$RELEASE_ID/assets?name=$ASSET_NAME -f '@'$ASSET_PATH
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         RELEASE_ID: ${{ steps.create_release.outputs.id }} #https://uploads.github.com/repos/octocat/Hello-World/releases/1/assets{?name,label}
