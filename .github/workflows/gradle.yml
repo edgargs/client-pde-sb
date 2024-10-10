@@ -30,7 +30,7 @@ jobs:
       id: create_release
       run: |
         release_id="$(gh api /repos/$OWNER/$REPO/releases/tags/$TAG --jq '.id')"
-        echo 'id=$release_id' >> "$GITHUB_OUTPUT"
+        echo 'id='$release_id >> "$GITHUB_OUTPUT"
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         OWNER: ${{ github.repository_owner }}
@@ -60,11 +60,11 @@ jobs:
     
     - name: Upload Release Asset
       id: upload-release-asset 
-      run: gh api --method POST /repos/$OWNER/$REPO/releases/$RELEASE_ID/assets?name=$ASSET_NAME -f "@$ASSET_NAME"
+      run: gh api --method POST /repos/$OWNER/$REPO/releases/$RELEASE_ID/assets?name=$ASSET_NAME -f "@$ASSET_PATH"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         RELEASE_ID: ${{ steps.create_release.outputs.id }} #https://uploads.github.com/repos/octocat/Hello-World/releases/1/assets{?name,label}
-        #ASSET_PATH: ./my-artifact.zip
+        ASSET_PATH: ./my-artifact.zip
         ASSET_NAME: my-artifact.zip
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
