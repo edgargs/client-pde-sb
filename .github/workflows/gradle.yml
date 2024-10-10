@@ -8,8 +8,8 @@
 name: Java CI with Gradle
 
 on:
-  pull_request:
-    branches: [ "main" ]
+  release:
+    types: [published]
 
 jobs:
   build:
