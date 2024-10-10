@@ -8,11 +8,8 @@
 name: Java CI with Gradle
 
 on:
-  push:
-    tags:
-      - 'v*'
-  #release:
-  #  types: [published] #https://michael-mckenna.com/how-to-upload-file-to-github-release-in-a-workflow/
+  release:
+    types: [published] #https://michael-mckenna.com/how-to-upload-file-to-github-release-in-a-workflow/
 
 
 jobs:
