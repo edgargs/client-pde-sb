@@ -20,11 +20,11 @@ jobs:
       contents: read
 
     steps:
-    - name: Dump GitHub context
-      env:
-        GITHUB_CONTEXT: ${{ toJson(github) }}
-      run: echo "$GITHUB_CONTEXT"
-    - run: echo "$GITHUB_REF_NAME"
+    # - name: Dump GitHub context
+    #   env:
+    #     GITHUB_CONTEXT: ${{ toJson(github) }}
+    #   run: echo "$GITHUB_CONTEXT"
+    # - run: echo "$GITHUB_REF_NAME"
 
     - uses: actions/checkout@v4
     - name: Set up JDK 21
@@ -48,7 +48,7 @@ jobs:
         zip --junk-paths my-artifact build/libs/*.jar
     - name: Create Release
       id: create_release
-      run: gh api /repos/$OWNER/$REPO/releases/tag/$TAG 
+      run: gh api /repos/$OWNER/$REPO/releases/tags/$TAG 
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         OWNER: ${{ github.repository_owner }}
