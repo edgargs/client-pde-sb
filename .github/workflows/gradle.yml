@@ -48,7 +48,10 @@ jobs:
         zip --junk-paths my-artifact build/libs/*.jar
     - name: Create Release
       id: create_release
-      run: gh api /repos/$OWNER/$REPO/releases/tags/$TAG 
+      run: |
+        response="$(gh api /repos/$OWNER/$REPO/releases/tags/$TAG)"
+        release_id=fromJson($response).id
+        echo 'id=$release_id' >> "$GITHUB_OUTPUT"
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         OWNER: ${{ github.repository_owner }}
@@ -56,10 +59,10 @@ jobs:
         TAG: ${{ github.ref_name }}
     - name: Upload Release Asset
       id: upload-release-asset 
-      run: gh api --method POST $UPLOAD_URL?name=$ASSET_NAME -f "@ASSET_NAME"
+      run: gh api --method POST /repos/$OWNER/$REPO/releases/$RELEASE_ID/assets?name=$ASSET_NAME -f "@$ASSET_NAME"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        UPLOAD_URL: ${{ steps.create_release.outputs.upload_url }} #https://uploads.github.com/repos/octocat/Hello-World/releases/1/assets{?name,label}
+        RELEASE_ID: ${{ steps.create_release.outputs.id }} #https://uploads.github.com/repos/octocat/Hello-World/releases/1/assets{?name,label}
         #ASSET_PATH: ./my-artifact.zip
         ASSET_NAME: my-artifact.zip
 
