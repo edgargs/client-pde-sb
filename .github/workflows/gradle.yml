@@ -37,11 +37,30 @@ jobs:
       run: chmod +x ./gradlew
     - name: Build with Gradle Wrapper
       run: ./gradlew bootJar
-    - name: Archive production artifacts
-      uses: actions/upload-artifact@v4
+
+    - name: Build project # This would actually build your project, using zip for an example artifact
+      run: |
+        zip --junk-paths my-artifact build/libs/*.jar
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-          name: dist-client-pde-sb
-          path: build/libs/*.jar
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: ./my-artifact.zip
+        asset_name: my-artifact.zip
+        asset_content_type: application/zip
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
     # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
@@ -78,30 +97,11 @@ jobs:
       run: chmod +x ./gradlew
     - name: Build with Gradle Wrapper
       run: ./gradlew nativeCompile
-    
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v4
+      with:
+          name: dist-client-pde-sb-native
+          path: build/native/nativeCompile/*
 
-    - name: Build project # This would actually build your project, using zip for an example artifact
-      run: |
-        zip --junk-paths my-artifact build/native/nativeCompile/*
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
-    - name: Upload Release Asset
-      id: upload-release-asset 
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: ./my-artifact.zip
-        asset_name: my-artifact.zip
-        asset_content_type: application/zip
           
 
