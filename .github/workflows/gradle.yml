@@ -53,17 +53,15 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         OWNER: ${{ github.repository_owner }}
         REPO: ${{ github.event.repository.name }}
-        TAG: $GITHUB_REF_NAME
+        TAG: ${{ github.ref_name }}
     - name: Upload Release Asset
       id: upload-release-asset 
-      run: gh api --method POST $UPLOAD_URL?name=my-artifact.zip -f "@my-artifact.zip"
+      run: gh api --method POST $UPLOAD_URL?name=$ASSET_NAME -f "@ASSET_NAME"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         UPLOAD_URL: ${{ steps.create_release.outputs.upload_url }} #https://uploads.github.com/repos/octocat/Hello-World/releases/1/assets{?name,label}
-      #with:
-      #  asset_path: ./my-artifact.zip
-      #  asset_name: my-artifact.zip
-      #  asset_content_type: application/zip
+        #ASSET_PATH: ./my-artifact.zip
+        ASSET_NAME: my-artifact.zip
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
     # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
