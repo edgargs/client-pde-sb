@@ -9,7 +9,7 @@ name: Java CI with Gradle
 
 on:
   release:
-    types: [published]
+    types: [published] #https://michael-mckenna.com/how-to-upload-file-to-github-release-in-a-workflow/
 
 
 jobs:
@@ -57,11 +57,10 @@ jobs:
     - name: Build project # This would actually build your project, using zip for an example artifact
       run: |
         zip --junk-paths my-artifact build/libs/*.jar
-        ls
     
     - name: Upload Release Asset
       id: upload-release-asset 
-      run: gh api --method POST /repos/$OWNER/$REPO/releases/$RELEASE_ID/assets?name=$ASSET_NAME -f "@$ASSET_PATH"
+      run: gh release upload ${{github.event.release.tag_name}} $ASSET_PATH
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         RELEASE_ID: ${{ steps.create_release.outputs.id }} #https://uploads.github.com/repos/octocat/Hello-World/releases/1/assets{?name,label}
