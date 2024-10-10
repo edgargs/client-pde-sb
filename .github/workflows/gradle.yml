@@ -20,6 +20,12 @@ jobs:
       contents: read
 
     steps:
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
+    - run: echo "$GITHUB_REF_NAME"
+
     - uses: actions/checkout@v4
     - name: Set up JDK 21
       uses: actions/setup-java@v4
@@ -47,7 +53,7 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         OWNER: ${{ github.repository_owner }}
         REPO: ${{ github.event.repository.name }}
-        TAG: GITHUB_REF_NAME
+        TAG: $GITHUB_REF_NAME
     - name: Upload Release Asset
       id: upload-release-asset 
       run: gh api --method POST $UPLOAD_URL?name=my-artifact.zip -f "@my-artifact.zip"
