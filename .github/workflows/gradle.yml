@@ -61,7 +61,7 @@ jobs:
     - name: Upload Release Asset
       id: upload-release-asset 
       run: |
-        gh api --method POST /repos/$OWNER/$REPO/releases/$RELEASE_ID/assets?name=$ASSET_NAME -f '@'$ASSET_PATH
+        gh api --method POST /repos/$OWNER/$REPO/releases/$RELEASE_ID/assets?name=$ASSET_NAME -f '@'$ASSET_NAME
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         OWNER: ${{ github.repository_owner }}
