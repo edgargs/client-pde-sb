@@ -1,0 +1,60 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
+
+name: Compile Native and Upload Release
+
+on:
+  release:
+    types: [published] #https://michael-mckenna.com/how-to-upload-file-to-github-release-in-a-workflow/
+
+jobs:
+
+  build-native:
+
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+    #- name: Create Release
+    #  id: create_release
+    #  run: |
+    #    release_id="$(gh api /repos/$OWNER/$REPO/releases/tags/$TAG --jq '.id')"
+    #    echo 'id='$release_id >> "$GITHUB_OUTPUT"
+    #  env:
+    #    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #    OWNER: ${{ github.repository_owner }}
+    #    REPO: ${{ github.event.repository.name }}
+    #    TAG: ${{ github.ref_name }}
+
+    - uses: actions/checkout@v4
+    - name: Set up JDK 21
+      uses: graalvm/setup-graalvm@v1
+      with:
+        java-version: '21'
+        distribution: 'graalvm'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+    - name: Build with Gradle Wrapper
+      run: ./gradlew nativeCompile
+
+    - name: Build project # This would actually build your project, using zip for an example artifact
+      run: |
+        7z a dist-client-pde-sb-windows.zip build/native/nativeCompile/*
+
+    - name: Upload Release Asset
+      id: upload-release-asset
+      run: gh release upload ${{github.event.release.tag_name}} $ASSET_PATH
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        #RELEASE_ID: ${{ steps.create_release.outputs.id }}
+        ASSET_PATH: ./dist-client-pde-sb-windows.zip
+        #ASSET_NAME: dist-client-pde-sb-native.zip
+
+
