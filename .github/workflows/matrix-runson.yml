@@ -45,4 +45,4 @@ jobs:
                   REPO: ${{ github.event.repository.name }}
                   RELEASE_ID: ${{ github.event.release.id }}
                   ASSET_NAME: dist-client-pde-sb-${{ matrix.os }}.zip
-                  ASSET_PATH: ./dist-client-pde-sb-${{ matrix.os }}.zip
+                  ASSET_PATH: dist-client-pde-sb-${{ matrix.os }}.zip
