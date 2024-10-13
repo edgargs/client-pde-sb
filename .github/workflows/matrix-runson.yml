@@ -31,5 +31,5 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   #RELEASE_ID: ${{ steps.create_release.outputs.id }}
-                  ASSET_PATH: ./dist-client-pde-sb-${{ matrix.os }}.zip
+                  ASSET_PATH: dist-client-pde-sb-${{ matrix.os }}.zip
                   #ASSET_NAME: dist-client-pde-sb-native.zip
