@@ -14,6 +14,12 @@ jobs:
             contents: write
 
         steps:
+            - name: Dump GitHub context
+              env:
+                GITHUB_CONTEXT: ${{ toJson(github) }}
+              run: echo "$GITHUB_CONTEXT"
+            - run: echo "$GITHUB_REF_NAME"
+
             - uses: actions/checkout@v4
             - uses: actions/setup-java@v4
               with:
@@ -27,9 +33,12 @@ jobs:
 
             - name: Upload Release Asset
               id: upload-release-asset
-              run: gh release upload ${{github.event.release.tag_name}} $ASSET_PATH
+              #run: gh release upload ${{github.event.release.tag_name}} $ASSET_PATH #Fail for Windows: requires al least 2 arg(s)
+              run: gh api --method POST --hostname github.com /repos/$OWNER/$REPO/releases/$RELEASE_ID/assets?name=$ASSET_NAME -f '@'$ASSET_PATH
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  OWNER: ${{ github.repository_owner }}
+                  REPO: ${{ github.event.repository.name }}
                   #RELEASE_ID: ${{ steps.create_release.outputs.id }}
-                  ASSET_PATH: dist-client-pde-sb-${{ matrix.os }}.zip
-                  #ASSET_NAME: dist-client-pde-sb-native.zip
+                  ASSET_PATH: ./dist-client-pde-sb-${{ matrix.os }}.zip
+                  ASSET_NAME: dist-client-pde-sb-${{ matrix.os }}.zip
