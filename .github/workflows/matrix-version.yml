@@ -15,3 +15,9 @@ jobs:
                 java-version: ${{ matrix.node }}
                 distribution: 'temurin'
             - run: echo "Building with ${{ matrix.node }}"
+
+            - name: Archive production artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                name: dist-dummy-jdk${{ matrix.node }}
+                path: README.md

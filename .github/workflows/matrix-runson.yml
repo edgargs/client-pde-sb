@@ -19,3 +19,16 @@ jobs:
                 java-version: '21'
                 distribution: 'graalvm'
             - run: echo "Compile native into ${{ matrix.os }}"
+
+            - name: Build project # This would actually build your project, using zip for an example artifact
+              run: |
+                  7z a dist-client-pde-sb-${{ matrix.os }}.zip README.md
+
+            - name: Upload Release Asset
+              id: upload-release-asset
+              run: gh release upload ${{github.event.release.tag_name}} $ASSET_PATH
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  #RELEASE_ID: ${{ steps.create_release.outputs.id }}
+                  ASSET_PATH: ./dist-client-pde-sb-${{ matrix.os }}.zip
+                  #ASSET_NAME: dist-client-pde-sb-native.zip
